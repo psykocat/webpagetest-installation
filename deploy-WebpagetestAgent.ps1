@@ -363,10 +363,13 @@ Function Deploy-WebPagetest(){
     if (Test-Path -Path "$cfg_file"){
         $config=((Get-Content "$cfg_file") -Join ''|ConvertFrom-Json)
         $wpt_url = $config.wpt_url
-        $wpt_password = $config.wpt_password
-        $wpt_location = $config.wpt_location
-        $wpt_key = $config.wpt_key
-        $windows_licenseKey = $config.windows_licenseKey
+        $wpt_password = [String]$config.wpt_password
+        $wpt_location = [String]$config.wpt_location
+        $wpt_key = [String]$config.wpt_key
+        $windows_licenseKey = [String]$config.windows_licenseKey
+        if($config.wpt_user) {
+            $wpt_user = [String]$config.wpt_user
+        }
     }
 
     # => Main

@@ -34,7 +34,6 @@ Function Deploy-WebPagetest(){
     # Github Dependencies
     $driver_installer_cert_url = "https://github.com/fasterize/webpagetest-installation/raw/master/files/WPOFoundation.cer"
     $driver_installer_url = "https://raw.githubusercontent.com/fasterize/webpagetest-installation/master/files/mindinst.exe"
-    $wpt_urlBlast_ini = "https://raw.githubusercontent.com/fasterize/webpagetest-installation/master/files/urlBlast.ini"
     $wpt_wptdriver_ini = "https://raw.githubusercontent.com/fasterize/webpagetest-installation/master/files/wptdriver.ini"
 
     # Scripts
@@ -261,7 +260,6 @@ Function Deploy-WebPagetest(){
         # for interactive session
         $startupFolder = "C:\Users\$User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
         cp "$InstallDir\wptdriver.exe" "$startupFolder\wptdriver.exe"
-        cp "$InstallDir\urlBlast.exe" "$startupFolder\urlBlast.exe"
 
         # for background session
         $GetTask = Get-ScheduledTask
@@ -274,17 +272,6 @@ Function Deploy-WebPagetest(){
             $P = New-ScheduledTaskPrincipal -UserId "$ThisHost\$User" -LogonType ServiceAccount
             Register-ScheduledTask -TaskName "wptdriver" -Action $A -Trigger $T -Setting $S -Principal $P *>> $Logfile
             Write-Log "[$(Get-Date)] Task (wptdriver) scheduled."
-        }
-        $GetTask = Get-ScheduledTask
-        if ($GetTask.TaskName -match "urlBlast") {
-            Write-Log "[$(Get-Date)] Task (urlBlast) already scheduled."
-        } Else {
-            $A = New-ScheduledTaskAction -Execute "$InstallDir\urlBlast.exe"
-            $T = New-ScheduledTaskTrigger -AtLogon -User $User
-            $S = New-ScheduledTaskSettingsSet
-            $P = New-ScheduledTaskPrincipal -UserId "$ThisHost\$User" -LogonType ServiceAccount
-            Register-ScheduledTask -TaskName "urlBlast" -Action $A -Trigger $T -Setting $S -Principal $P *>> $Logfile
-            Write-Log "[$(Get-Date)] Task (urlBlast) scheduled."
         }
     }
     function Set-ScheduleDefaultUserName ($ThisHost, $User, $Password, $InstallDir) {
@@ -326,10 +313,6 @@ Function Deploy-WebPagetest(){
 
     }
     function Set-WptConfig ($Location, $Url, $Key){
-        Download-File -url $wpt_urlBlast_ini -localpath $wpt_agent_dir -filename "urlBlast.ini"
-        Replace-String -filePath "$wpt_agent_dir\urlBlast.ini" -stringToReplace "%%URL%%" -replaceWith $Url
-        Replace-String -filePath "$wpt_agent_dir\urlBlast.ini" -stringToReplace "%%KEY%%" -replaceWith $Key
-
         Download-File -url $wpt_wptdriver_ini -localpath $wpt_agent_dir -filename "wptdriver.ini"
         Replace-String -filePath "$wpt_agent_dir\wptdriver.ini" -stringToReplace "%%URL%%" -replaceWith $Url
         Replace-String -filePath "$wpt_agent_dir\wptdriver.ini" -stringToReplace "%%KEY%%" -replaceWith $Key
@@ -388,9 +371,15 @@ Function Deploy-WebPagetest(){
     Set-DisableIESecurity
     Set-StableClock
     Set-DisableShutdownTracker
-    Download-File -url $wpt_zip_url -localpath $wpt_temp_dir -filename $wpt_zip_file
-    Download-File -url $driver_installer_url -localpath $wpt_agent_dir -filename $driver_installer_file
-    Download-File -url $driver_installer_cert_url -localpath $wpt_temp_dir -filename $driver_installer_cert_file
+    if (!(Test-Path -Path "$wpt_temp_dir\$wpt_zip_file")){
+        Download-File -url $wpt_zip_url -localpath $wpt_temp_dir -filename $wpt_zip_file
+    }
+    if (!(Test-Path -Path "$wpt_agent_dir\$driver_installer_file")){
+        Download-File -url $driver_installer_url -localpath $wpt_agent_dir -filename $driver_installer_file
+    }
+    if (!(Test-Path -Path "$wpt_temp_dir\$driver_installer_cert_file")){
+        Download-File -url $driver_installer_cert_url -localpath $wpt_temp_dir -filename $driver_installer_cert_file
+    }
     Unzip-File -fileName $wpt_zip_file -sourcePath $wpt_temp_dir -destinationPath $wpt_agent_dir
     Set-WebPageTestInstall -tempDir $wpt_temp_dir -AgentDir $wpt_agent_dir
     Set-InstallDummyNet -InstallDir $wpt_agent_dir

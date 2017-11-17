@@ -10,11 +10,11 @@ Function Deploy-WebPagetest(){
         [String]$driver_installer_cert_file = "WPOFoundation.cer",
         [String]$wpt_agent_dir = "C:\webpagetest",
         [String]$wpt_temp_dir = "C:\wpt-temp",
-        [String]$wpt_password = "p@ssword",
-        [String]$wpt_url = "http://www.webpagetest.com/",
-        [String]$wpt_location = "wpt_location",
-        [String]$wpt_key = "wpt_key",
-        [String]$windows_licenseKey = "XXXXX-XXXXX-XXXXX-XXXXX-XXXXX"
+        [String]$wpt_url = "",
+        [String]$wpt_password = "",
+        [String]$wpt_location = "",
+        [String]$wpt_key = "",
+        [String]$windows_licenseKey = ""
     )
     # Create Log File
     if (!( Test-Path $Logfile)){
@@ -356,6 +356,24 @@ Function Deploy-WebPagetest(){
         Stop-Service fdPHost -force
     }
 
+    # Extract last params from config if exists
+    $tmp_cfg_file="a:\wpt_config.json"
+    $cfg_file="$wpt_agent_dir\wpt_config.json"
+
+    Set-WptFolders
+    # Save config file if set in a temporary location
+    if (Test-Path -Path "$tmp_cfg_file"){
+        cp "$tmp_cfg_file" "$cfg_file"
+    }
+    if (Test-Path -Path "$cfg_file"){
+        $config=((Get-Content "$cfg_file") -Join ''|ConvertFrom-Json)
+        $wpt_url = $config.wpt_url
+        $wpt_password = $config.wpt_password
+        $wpt_location = $config.wpt_location
+        $wpt_key = $config.wpt_key
+        $windows_licenseKey = $config.windows_licenseKey
+    }
+
     # => Main
     Set-WindowsLicense -LicenseKey $windows_licenseKey
     Activate-Windows-Update
@@ -372,7 +390,6 @@ Function Deploy-WebPagetest(){
     Set-DisableIESecurity
     Set-StableClock
     Set-DisableShutdownTracker
-    Set-WptFolders
     Download-File -url $wpt_zip_url -localpath $wpt_temp_dir -filename $wpt_zip_file
     Download-File -url $driver_installer_url -localpath $wpt_agent_dir -filename $driver_installer_file
     Download-File -url $driver_installer_cert_url -localpath $wpt_temp_dir -filename $driver_installer_cert_file

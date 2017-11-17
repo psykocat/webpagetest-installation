@@ -71,8 +71,10 @@ Function Deploy-WebPagetest(){
     }
 
     function Set-WindowsLicense ($LicenseKey) {
-        Write-Log "[$(Get-Date)] Set Windows License."
-        DISM /online /Set-Edition:ServerStandard /ProductKey:$LicenseKey /AcceptEula
+        if ("$LicenseKey" -ne ""){
+            Write-Log "[$(Get-Date)] Set Windows License."
+            DISM /online /Set-Edition:ServerStandard /ProductKey:$LicenseKey /AcceptEula
+        }
     }
 
     function Activate-Windows-Update () {
@@ -397,6 +399,6 @@ Function Deploy-WebPagetest(){
 
 }
 
-# MAIN : Deploy Web Pagge Test
+# MAIN : Deploy WebPageTest
 Deploy-WebPagetest
 #Deploy-WebPagetest -DomainName "%wptdomain%" -wpt_user "%wptusername%" -wpt_password "%wptpassword%"

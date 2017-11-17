@@ -258,15 +258,8 @@ Function Deploy-WebPagetest(){
     function Set-WebPageTestScheduledTask ($User,$InstallDir){
         # for interactive session
         $startupFolder = "C:\Users\$User\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
-        $WshShell = New-Object -ComObject WScript.Shell
-        $Shortcut = $WshShell.CreateShortcut("$startupFolder\wptdriver.exe.lnk")
-        $Shortcut.TargetPath = "$InstallDir\wptdriver.exe"
-        $Shortcut.Save()
-
-        $WshShell = New-Object -ComObject WScript.Shell
-        $Shortcut = $WshShell.CreateShortcut("$startupFolder\urlBlast.exe.lnk")
-        $Shortcut.TargetPath = "$InstallDir\urlBlast.exe"
-        $Shortcut.Save()
+        cp "$InstallDir\wptdriver.exe" "$startupFolder\wptdriver.exe"
+        cp "$InstallDir\urlBlast.exe" "$startupFolder\urlBlast.exe"
 
         # for background session
         $GetTask = Get-ScheduledTask
